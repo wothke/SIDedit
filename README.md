@@ -16,7 +16,7 @@ characters.
 
 Obviously there is a prebuilt win32 executable (32-bit) in the main folder. 
 But in case you want to build the same thing from src or run the perl script 
-directly below some notes how I went about it (this might also help me to 
+directly, below some notes how I went about it (this might also help me to 
 remember next time I might have to touch this.. which I do not intend to do):
 
 ### install Perl 
@@ -74,6 +74,7 @@ the Perl interpreter.
 To create an .exe with all the Perl stuff in it, install the "PAR Packager":
 
 `cpan> get pp`
+
 `cpan> install pp`
 
 you can then type the below in a windows command prompt:
@@ -81,10 +82,11 @@ you can then type the below in a windows command prompt:
 `pp.bat --gui --compress=9 -u -o SIDedit.exe SIDedit.pl`
 
 
+## license
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 
-
-
- that the SIDedit.pl  script depends on.
 
 

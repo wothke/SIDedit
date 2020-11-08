@@ -1,0 +1,948 @@
+NAME
+
+    SIDedit - A Perl/Tk GUI based application to read and edit binary SID
+    files.
+
+DESCRIPTION
+
+    This Perl/Tk GUI application allows the user to read, write and edit
+    binary SID files, which are music player and data routines converted
+    from the Commodore-64 computer with an additional informational header
+    prepended. SIDedit has become a useful tool for people ripping SID tunes
+    out of Commodore-64 executables.
+
+    Most of the application's common functions should be obvious, and for
+    some of the less obvious ones tooltips provide additional hints.
+
+    This tool is intended for programmers, SID rippers, or other people with
+    reasonable background. It is not suitable for newbies who have never
+    before used hexadecimal numbers, who are not familiar with the
+    Commodore-64 computer's internals or with the SID file format (click
+    *Help -* SID file format> on the menu for the format specification).
+
+USAGE
+
+  A SHORT TUTORIAL: I JUST RIPPED A TUNE - NOW WHAT?
+
+    Let's say you just ripped a SID tune and it's sitting on your hard drive
+    as a Commodore-64 executable and you want to turn it into a standard SID
+    file so it can be incorporated into the High Voltage SID Collection.
+
+    Let's assume that your freshly ripped tune is in a file called
+    Ripped.prg. (SIDedit recognizes a file as a C64 data file only if its
+    extension is one of .prg, .p00, .c64 or .dat.) Start up SIDedit, check
+    the List C64 data files checkbox and navigate to the directory where
+    this file can be found. Click on the file. SIDedit will ask you whether
+    you want to load it as SID data. Answer yes. SIDedit also asks you
+    whether you want to reset the SID header data to the defaults. For now
+    answer yes to this question, too. The binary data from Ripped.prg gets
+    loaded into SIDedit.
+
+    Now all you have to do is edit the SID header and save the resulting
+    file. Remember that when you change any field in the *SID header* in
+    SIDedit, you are editing an in-memory copy of the SID file, not the SID
+    file itself! Once you are done with your changes, you'll have to save
+    them to a file to make the changes permanent.
+
+    First, decide whether your rip is PlaySID compatible or requires a real
+    C64 environment to play properly. See the next section below for a
+    detailed discussion about this. When you decided, set the *Environment*
+    field to your choice.
+
+    Then, make sure that the *Load range* displayed in SIDedit is the same
+    as the one you used when you saved the file. If it isn't, enter the load
+    address in the *loadAddress* field and make sure the Always save as PSID
+    v2NG/RSID option is checked in the *Configure settings* window under the
+    *File navigator* tab, otherwise leave the *loadAddress* field at 0.
+    (NOTE: if you selected *Real C64* as the rip's environment, you can't
+    edit the *loadAddress* field!)
+
+    Then, at a minimum, you should edit the *initAddress* and *playAddress*
+    hexadecimal fields (leave *playAddress* as 0 only if the initialization
+    routine of the ripped tune installs an interrupt player itself - this
+    will always be set to 0 for *Real C64* rips and you won't be able to
+    change it), the *songs* and *startSong* decimal fields (both should be
+    at least 1), and, of course, the textual *name*, *author* and *released*
+    fields that should conform to HVSC standards (read the HVSC FAQ for
+    details on that or hover with the mouse over those fields to see their
+    tooltips for examples).
+
+    If certain (or all) subsongs of your rip use different timers, you might
+    also want to edit the *speed* field. (NOTE: You can't do this if your
+    rip is a *Real C64* rip.) The easiest way to do this is to click on the
+    Edit speed bits button, where you can set the speed of the individual
+    subsongs. Due to the SID file format's limitation, subsongs #32 and
+    higher are all represented by 1 bit only, so they'll all have the same
+    speed. This is rarely a problem, though.
+
+    Next you should edit the *flags* field. Again, instead of typing in the
+    actual hexadecimal value for this field it's easier if you simply click
+    on the Edit the flags button. Here you can specify whether your rip uses
+    a built- in player or not (it most likely does), and whether it's fully
+    C64 compatible or it's PlaySID specific (note: this latter setting is
+    not an available choice for *Real C64* rips). For example, if your rip
+    plays digi samples and you didn't alter the original player routine,
+    it's definitely a fully C64 compatible rip. If you modified the player
+    routine so that it plays the digi samples via the extended PlaySID
+    registers (not recommended), then you should definitely check the
+    PlaySID specific checkbutton. For *Real C64* rips check the C64 BASIC
+    executable checkbox if the ripped tunes uses BASIC instructions.
+
+    You should also specify here whether the tune you ripped was intended
+    for PAL or NTSC machines (or maybe it works on both), and also whether
+    it was intended by its author to be played on a 6581 or 8580 chip (or
+    maybe both). Then press Done, and the *flags* field will be
+    automatically updated for you.
+
+    To help SID emulators determine where they should install their
+    interrupt routines, you may want to specify the area of memory that is
+    definitely not used by your ripped tune. Usually this is a problem only
+    when the initialization or player routine reads or writes to memory that
+    is outside the *Load range*. If this is the case, you should specify the
+    address of the first free 256 byte large memory page in *startPage* and
+    the number of free pages following that in *pageLength*. For example,
+    startPage = $30 and pageLength = $10 indicates that the memory area
+    between $3000 and $3FFF is never touched by your ripped tune.
+
+    A common example for how to fill out the different SID fields is below:
+
+    *   *Environment*: *PlaySID*
+
+    *   *loadAddress*: $0000 (or set it to the actual load address if *Load
+        range* shows a seemingly incorrect memory range)
+
+    *   *initAddress*: $1000
+
+    *   *playAddress*: $1003
+
+    *   *songs*: 1
+
+    *   *startSong*: 1
+
+    *   *speed*: 0x00000000 (indicating the the tune uses the vertical sync
+        for timing)
+
+    *   *name*: My Love is Infinite
+
+    *   *author*: John Doe
+
+    *   *released*: 2004 BoyBand
+
+    *   *flags*: 0x0014 (indicating a fully C64 compatible rip with a
+        built-in player that was intended for PAL machines and to be played
+        back on 6581 chips)
+
+    *   *startPage*: $00 (indicating that the rip is "clean", i.e. it
+        doesn't write outside its *Load range*)
+
+    *   *pageLength*: $00 (if *startPage* is $00, *pageLength* should be
+        $00, too)
+
+    Now click on the Create HVSC compliant filename button. This will -
+    surprisingly - create an HVSC compliant filename out of the SID's name,
+    in this case it'll create the filename My_Love_is_Infinite.sid. Then
+    make sure the Always save as PSID v2NG/RSID option is checked in the
+    *Configure settings* window and save the file by clicking on the Save
+    file button on the toolbar. That's it! (You can also save the SID file
+    to a different directory by choosing File - Save as...> from the menu.)
+
+    If you ripped more than one tune from the same author, you might want to
+    do the following to save you from typing in his name for every rip:
+    after doing the above procedure, make sure the little checkbuttons by
+    the *author* and *released* fields are checked and all the other ones
+    are not. Make sure the Edit - Copy format -> Selected fields only> menu
+    option is also checked, then select Edit - Copy> from the menu or press
+    CTRL-C. This will copy the above two SID fields as text to the
+    clipboard. Now you can go on and add a SID header to your next rip as
+    outlined above, but instead of typing in the author and release info,
+    simply select Edit - Paste> from the menu or press CTRL-V.
+
+  A FEW WORDS ABOUT THE ENVIRONMENT SETTING (PlaySID vs. Real C64)
+
+    You'll notice there is a setting labeled *Environment* that can be set
+    either to PlaySID or to Real C64. When it is set to PlaySID, SIDedit
+    will save the SID to a valid PSID v1 or v2/v2NG file depending on the
+    other settings. When it is set to Real C64, the data will always be
+    saved to an RSID (RealSID) file, which is basically a PSID v2NG file
+    with its magic ID set to 'RSID' instead of 'PSID'.
+
+    The main difference between the two settings is that Real C64 indicates
+    that the rip requires a true Commodore-64 environment to operate
+    properly and won't even play in (or might even crash!) older libsidplay1
+    and PlaySID compatible SID emulators. The advantage of RSID files is
+    that they can be run on a real C64 unmodified. For this reasons it is
+    highly recommended to save every SID file as an RSID (Real C64 file).
+    See the SID_file_format.txt file included with SIDedit for further
+    details (it is discussed under the 'magicID' field).
+
+    Setting the environment to Real C64 also enforces additional
+    restrictions on top of PSID v2NG: it automatically sets the
+    *loadAddress*, *playAddress* and *speed* fields to 0 and modifying these
+    fields is no longer possible, plus changing the bit in the *flags* field
+    to make the file *PlaySID specific* will be no longer possible, either.
+    Also, the *initAddress* and the relocation range indicated by
+    *startPage* and *pageLength* cannot be inside or overlap the ROM/IO
+    ($A000-$BFFF and $D000-$FFFF) areas, *initAddress* cannot be lower than
+    $07E8 and the relocation range cannot overlap the reserved memory area
+    ($0000-$03FF).
+
+  DISPLAYING, EDITING AND SAVING THE C64 DATA
+
+    When you press the Display SID data button, a new window pops up. Here
+    you can select whether you want to display the *data* portion of a SID
+    file as a Hex dump, or as disassembled machine code (Assembly
+    checkbutton), or as disassembled machine code showing the illegal
+    instructions, too. Note that when you display the data as Hex dump, for
+    your convenience C64 ASCII characters (both uppercase and lowercase)
+    will be shown as standard ASCII characters on the screen. Also note that
+    when the data is shown as assembly code, you can click on certain jump
+    and branch addresses to jump to that address directly without scrolling
+    to it. Also, when you switch from assembly to hex dump mode or vice
+    versa, the topmost line of the display will be at approximately the same
+    address where it was in the previous display mode.
+
+    You can specify the first memory address from which the data will be
+    shown by choosing either the Load address, the initAddress, the
+    playAddress, or an arbitrary memory address (Other) as the starting
+    point for the display.
+
+   SAVING SID DATA
+
+    You can also save the C64 *data* portion of a SID to a file by clicking
+    the Save data to file button. Choosing the as binary option will save it
+    to a standard C64 binary file with a .prg extension, while choosing the
+    as displayed option will save the actual content of the data display
+    into a plain text file. Choosing the as 64 KB memory image option will
+    create a binary file with an .img extension that is exactly 65536 bytes
+    large and is basically a snapshot of the C64's 64 KB memory with the
+    *data* portion of the SID file at the appropriate memory address
+    location. Therefore, if you hex edit the resulting .img file, the
+    offsets in your hex editor will match that of the actual offsets when
+    the *data* is loaded into the C64's memory.
+
+   CHANGING THE SIZE OF THE SID DATA
+
+    The window also gives you an opportunity to change the size of the C64
+    *data*. You can enter a new load range for the *data* in the Trim/pad
+    data section. If the new range you specify is greater than the current
+    load range at either end, the C64 *data* gets filled with zeros
+    accordingly. If the new range you specify is smaller than the current
+    load range at either end, the C64 *data* portion gets trimmed (chopped)
+    as specified. Pressing the Trim/pad data button carries out the change
+    and it also updates the appropriate SID header data. WARNING: if you
+    reduce the *data* portion there's no other way of getting back the cut
+    data other than reloading the file! Be careful with this button!
+
+   MODIFYING BYTES IN SID DATA
+
+    Finally, you can also modify a contiguous string of bytes in the *data*
+    portion by clicking on Modify bytes. This is very useful if you want to
+    add, say, a short sequence of assembly instructions to the SID data.
+
+    First specify the C64 address from which you want to modify bytes, then
+    specify the bytes that you want to change it to in the format of "xx xx
+    xx ..." where 'xx' are hexadecimal bytes. For example, setting At
+    address to $1000 and the change bytes to to "AB BA" will change the C64
+    *data* portion at $1000 to hex $AB and at $1001 to hex $BA. Needless to
+    say, don't do byte modifications unless you are absolutely sure about
+    what you are doing as you can really mess up the SID file with incorrect
+    byte modifications here.
+
+  FILE NAVIGATOR
+
+    The left-hand side of the main SIDedit window is dedicated to the file
+    navigator. You can use the file navigator to browse directories, load
+    SID files into SIDedit, play SID files by double-clicking on them, etc.
+    If the directory listing is long, you can also type the first few
+    letters of the file or directory you'd like to jump to after making the
+    given listbox active by rolling your mouse pointer over it.
+
+    The file navigator also has its own toolbar. Besides the usual buttons,
+    like Go to parent directory, Create new directory and Delete selected
+    directory there are also a few so-called directory shortcut buttons. You
+    can use these to jump directly to certain frequently used directories,
+    like to the directory where you usually save your SID files to, or to go
+    to your HVSC directory. You configure where these shortcuts point to on
+    the Configure settings window under the File navigator tab.
+
+  LOADING INFO FILES
+
+    SIDedit is also capable of loading SID header data from so-called INFO
+    files which usually have a *.sid* file extension. These files were part
+    of a now obsolete two-file SID file format.
+
+    Check the List INFO files checkbox at the top of the file navigator in
+    SIDedit to see a list of such files in the file navigator. Once you
+    click on an INFO file, SIDedit will ask you whether you want to overload
+    the current SID header data in the memory with the one contained in the
+    INFO file. Answer yes to carry out this operation.
+
+  PLAYING YOUR RIP IN A SID EMULATOR
+
+    After saving a SID file you probably want to make sure it plays
+    correctly in your favorite SID emulator. SIDedit can launch your
+    favorite SID player with a selected file as outlined below.
+
+    First, select the Tools tab in the Configure settings window to tell
+    SIDedit which SID player you would like to use for this feature.
+
+    Then you can launch your SID player either by clicking on the Play SID
+    file button on the toolbar, or by double-clicking on the file. If you
+    didn't configure a SID player, yet, SIDedit will automatically pop up
+    the Configure settings window to prompt you for the location of the SID
+    emulator you want to use to play the file.
+
+  EDITING YOUR RIP WITH A HEX EDITOR
+
+    You might also want to edit the *data* portion of the SID file after you
+    saved the file. You can do this with your favorite hex editor from
+    within SIDedit by clicking the Edit file with hex editor button on the
+    toolbar.
+
+    First, select the Tools tab in the Configure settings window to tell
+    SIDedit which hex editor you would like to use for this feature.
+
+    Then you can start your hex editor by clicking on the Edit file with hex
+    editor button.
+
+    If you didn't configure a hex editor, yet, SIDedit will automatically
+    pop up the Configure settings window to prompt you for the location of
+    the hex editor you want to use for this purpose.
+
+  CHECKING YOUR RIP WITH AN EXTERNAL TOOL
+
+    After saving a SID file you might want to run an external tool like
+    SID2CRC to make sure that your rip is a pristine SID tune. Select the
+    SID file in the file navigator then click the Run command line tool
+    button on the toolbar. Here you can enter a command line that will
+    execute your tool in a shell or choose from a list of previously
+    executed tools (the list remembers the last 10 commands you ran and this
+    list is also saved with other settings to SIDedit.INI).
+
+    For example, assuming that sid2crc is in your path, enter *sid2crc -v
+    -t80000 -m %f* at the command line entry. *%f* will be replaced with the
+    full pathname of the file you selected in the file navigator. You can
+    also use *%d* to substitute the full pathname of the current directory
+    shown in the file navigator of SIDedit, or *%x* to subsitute the full
+    pathname of the selected file without its extension. Now click the Run
+    command line tool button and the command line you entered will be
+    executed.
+
+    The output of the command will appear in a new pop-up window. (If you
+    see nothing here, the command you entered most likely failed.) There are
+    two additional buttons on this window that also allow you to save the
+    command's output to a file and to copy the contents of the output to the
+    clipboard. You can also pop up this window any time by clicking the Run
+    tool button in the main SIDedit window and then clicking Show last
+    output or by choosing File - Show last output of tool...> from the menu
+    - as its name suggests it will always show you the output of the most
+    recent command you executed.
+
+  SAVING YOUR SETTINGS
+
+    When you quit SIDedit, it automatically saves your settings to a
+    SIDedit.INI file that will be located in the same directory from where
+    you started SIDedit itself. If you want to disable this feature, uncheck
+    the Always save settings on exit option on the General tab in the
+    Configure settings window and click Save settings now - from now on,
+    SIDedit will read the settings from the SIDedit.INI file, but it won't
+    save your changes to it when you quit the program. You can also force
+    SIDedit to save the current settings to the SIDedit.INI file any time by
+    clicking on the <Save settings now> in the same window.
+
+    Note that besides all the settings available on the Configure settings
+    menu, SIDedit also saves the settings of all the options available via
+    the Edit menu, the list of the last 10 commands that were executed with
+    the Run command line tool feature, plus the last size and position of
+    the main SIDedit window and some other windows.
+
+PREREQUISITES
+
+    This script requires the following modules: Audio::SID Cwd
+    File::Basename File::Copy Tk Tk::Balloon Tk::Checkbutton Tk::Dialog
+    Tk::DialogBox Tk::Optionmenu Tk::Radiobutton Tk::ROText Tk::BrowseEntry
+    Tk::LabFrame Tk::Scrollbar Tk::Button Tk::Entry Tk::Photo Tk::ToolBar
+    Tk::NoteBook Tk::WaitBox Tk::DirTree
+
+    On Win32 machines it also uses these modules: Win32 Win32::API
+    Win32::Process Win32::Clipboard Win32API::File
+
+KNOWN BUGS
+
+    *   Data display rendering and clipboard operations are way too slow
+        with colors (try new Perl/Tk?).
+
+    *   Under UNIX bringing up the display data window caused a grab fail.
+        (Bug in Perl/Tk?)
+
+    *   On some systems if you press down on the mousewheel button and move
+        down, the SID data scrolls up, and moving up scrolls down (it should
+        be the other way around). (Bug in Perl/Tk.)
+
+    *   There's a problem with the scrollbar on the data display window when
+        "assembly" is selected: it doesn't always scroll all the way down
+        when grabbed with the scrollblock. (Bug in Perl/Tk.)
+
+    *   Checked items in the menu partially cover first letter of menu
+        entry. (Bug in Perl/Tk.)
+
+    *   After selecting File->New last file doesn't get deselected in the
+        filelist. (Bug in Perl/Tk - can't deselect from listbox.)
+
+    If you find any other bugs in this module, please, report them to the
+    author (see "COPYRIGHT" below).
+
+TO DO LIST
+
+    *   Disassembly rendering (when jumping to address or switching views)
+        should always re-start at proper address (instead of in the middle
+        of an instruction).
+
+    *   RunTool execution should have a WaitBox.
+
+    *   Restrict Play SID file to actual SID/INFO files only.
+
+    *   DirTree browser doesn't quite work in Win32. Try chooseDirectory
+        instead?
+
+    *   Add key bindings to Configure settings popup.
+
+    *   Add popup to show quick summary of assembly codes.
+
+    *   Add File -> Open... (rip out a Load function from FileSelect).
+
+    *   Add "Load data" to SID data display.
+
+    *   I'd like to have SIDedit remember the last x directories I worked
+        in. Sometimes I quickly need to change between my rip directory and
+        the HVSC directory to compare something, so it would be nice to
+        implement a similar history function as in the RUN TOOL window. (Add
+        <- and -> nav buttons!)
+
+    *   Optimize Load/Save Settings code (hash! - use Config::IniHash or
+        sg).
+
+    *   Optimize Settings screen code (map!).
+
+    *   Add right-click menu to file navigator. Prune right-click menu on
+        SID data and text display? (Selection problem!)
+
+    *   Add mm file analyzation support, see SidUsage files!
+
+    *   Change "name" field to "Title" (In Audio::SID, too).
+
+    *   Add an info field to "Show SID Data" that shows which SID player
+        engine is used.
+
+    *   Add option to allow users to revert back to standard copy/paste
+        operations (i.e. select a field, copy it). (BUT:
+        $window->clipboardPaste() doesn't work, neither does $window->insert
+        - great...)
+
+    *   Add a button called "Batch processing". In there one option would be
+        to generate a text output of checked fields recursively in current
+        dir, another option would be to change the checked fields in all
+        files recursively to what is in current file.
+
+    *   Simon: I still wish something could be done about it like say
+        combining load address and range (make load address always reflect
+        the range start address). Then by changing load address you'll see
+        the range change. Also might be nice if you then click display data
+        the new load address is used... You could even combine load address
+        and range into a single line.
+
+    *   Keep the ShowSIDData and ShowTextOutput windows on screen, don't
+        grab, so they can be displayed side-by-side.
+
+    *   Add Dag's code to fill out startPage and pageLength automatically.
+
+    *   Add ability to recurse dirs and autoconvert SID files as per
+        specified options.
+
+    *   Load MD5s from expanded Songlengths DB to find SIDs already in HVSC.
+
+    *   Allow siddiag duplicate match against HVSC. Or in general
+        incorporate a duplicate finder?
+
+    *   Add ability to search every field of every SID found in HVSC and/or
+        other specified directories. Sort of like SidBace. Build a text DB
+        for this. Add search capability for Songlength DB, STIL, etc.
+
+COPYRIGHT
+
+    SIDedit Copyright (C) 1999, 2004 by LaLa <LaLa@C64.org>
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
+VERSION
+
+    SIDedit v4.02+
+
+SEE ALSO
+
+    *   LaLa's SID pages for the latest version of SIDedit:
+
+        http://lala.c64.org
+
+    *   The SIDPLAY homepage for the SID file format documentation, SID
+        emulators and SID-related tools:
+
+        http://www.geocities.com/SiliconValley/Lakes/5147/
+
+    *   The SIDPLAY2 homepage for documents about the PSID v2NG extensions:
+
+        http://sidplay2.sourceforge.net
+
+    *   The SID Rippers' Guide:
+
+        http://www.geocities.com/SiliconValley/Lakes/5147/
+
+    *   The High Voltage SID Collection, the most comprehensive archive of
+        SID tunes:
+
+        http://www.hvsc.c64.org
+
+    *   Audio::SID
+
+VERSION HISTORY
+
+  v4.02+ (11/08/2020 by Tiny'R'Sid)
+
+    *   Added "List all files" option so that binaries can be loaded without 
+        having to rename them to "*.prg" first.
+
+    *   Added browsing support for Windows folder names containing non-ASCII 
+        characters.
+
+    *   Patched so it works with Perl and module versions still available today.
+
+  v4.02 (03/13/2004)
+
+    *   (added) All illegal assembly instructions are colored red in the
+        data display when syntax coloring is turned on.
+
+    *   (added) A line consisting of dashes is displayed after every JMP and
+        RTS instruction in the data display to improve readability.
+
+    *   (added) Added configuration setting "Automatically create HVSC
+        compliant filename when 'name' field changes". Turning on this
+        setting automatically changes the filename to be HVSC compliant
+        whenever the 'name' field changes, and it also gets rid of the
+        pop-up confirmation window when the "Create HVSC compliant filename"
+        button is pressed.
+
+    *   (fixed) Added missing '$' signs when displaying conditional branch
+        instruction addresses in the data display.
+
+  v4.01 (02/15/2004)
+
+    *   (added) New setting to turn off syntax coloring in data display to
+        speed up display and clipboard operations.
+
+    *   (added) Version history in the POD.
+
+    *   (added) Broke up content of INI file into 4 sections within the file
+        for better readability.
+
+    *   (fixed) Colors were one off on the hex data display.
+
+    *   (fixed) There was a problem entering the "Other" address in the data
+        display. It caused focus problem, data rendering problem, etc. The
+        address entry is now enabled permanently.
+
+  v4.00 (02/02/2004)
+
+    You'll notice that the user interface of SIDedit has undergone some
+    significant upgrades which will hopefully make it easier to use. The
+    basic functionality of SIDedit hasn't changed much, though.
+
+    IMPORTANT: If you're installing this version of SIDedit over the old
+    one, I strongly advise you to -DELETE- your existing SIDedit.ini file to
+    remove the chance of some weird bug happening. Upon first starting
+    SIDedit v4.00, select "Tools" -> "Configure settings", then click "Save
+    settings now" to re-create the SIDedit.ini file.
+
+    If you are using the UNIX/Perl version (i.e the SIDedit.pl file from the
+    tarball) you'll notice that you'll have to install a few new Perl/Tk
+    modules to get SIDedit running. It's inconvenient, I know, but it was
+    the only way I could add some cool new widgets to the tool.
+
+    *   (added) Added support for the new 'C64 BASIC' RSID flag. (Thanks to
+        Simon White!) Click on "Edit flags" to set or clear this flag.
+
+    *   (added) Added rudimentary support to modify a continuous string of
+        bytes in the SID data itself. See "Display SID data" -> "Modify
+        bytes". Consult the "Modifying Bytes in SID Data" section of the
+        "Help" -> "Quick tutorial" guide for details on its usage. (WARNING:
+        You can really mess up a SID file with this, so use it with extreme
+        care!)
+
+    *   (added) Major overhaul of the user interface includes (but is not
+        limited to):
+
+        *
+              (added)
+                SIDedit now uses menus and toolbars for easy access
+                to most functions.
+
+        *
+              (added)
+                Help screens use external files.
+
+        *
+              (added)
+                File -> New to reset SID data to defaults.
+
+        *
+              (added)
+                File -> Save as... to save file to arbitrary location.
+
+        *
+              (added)
+                The main window and the data display make use of colors.
+
+        *
+              (added)
+                In the data display window it is now possible to click
+                on the jump/branch addresses to jump to that location
+                directly (if that location can be displayed in the window).
+
+        *
+              (added)
+                In the data display window switching between hex dump
+                and assembly listings retains the currently displayed
+                address range in the window.
+
+        *
+              (added)
+                All the settings are now configurable via a separate
+                "Configure settings" popup window.
+
+        *
+              (added)
+                Experimental mousewheel support. (NOTE: on some systems
+                if you press down on the mousewheel button and move down,
+                the window contents scroll up, and moving up scrolls them
+                down instead of the other way around. This seems to be a
+                bug in Perl/Tk itself.)
+
+        *
+              (added)
+                The file navigator window pane also got its own toolbar
+                with 3 directory "shortcuts" (default dir, default save
+                dir, HVSC dir) which are configurable via the "Configure
+                settings" popup window. You can use these shortcuts to
+                jump to those dirs without navigating to them.
+
+        *
+              (added)
+                Toolbar icons that are lifted from Tk::Toolbar -> tkIcons.
+
+        *
+              (added)
+                Errors that would be displayed on the command line are now
+                displayed in an error message box.
+
+        *
+              (added)
+                Window positions are retained and also saved to
+                configuration file.
+
+        *
+              (added)
+                "Please wait" popup window when SID data display rendering
+                takes a long time.
+
+        *
+              (added)
+                Jumping between hex and assembly display in the SID data
+                display retains location from the previous display mode.
+
+    *   (added) The POD is now in its separate .pod file.
+
+    *   (added) Added "%x" command line substitution pattern to the "Run
+        Tool" feature to allow full pathname without file extension.
+
+    *   (fixed) Additional verification of playAddress and initAddress
+        fields.
+
+    *   (fixed) Pressing delete and backspace in the SID fields will also
+        flag the in-memory file as modified.
+
+    *   (fixed) Sub-windows now properly take and release focus.
+
+    *   (fixed) InitAddress and playAddress are grayed out in the SID data
+        display if they are zero.
+
+    *   (fixed) Saving a file with the same name but different case now
+        saves the file with the new cases.
+
+    *   (fixed) If "List INFO files" is checked, loading of data files is no
+        longer messed up.
+
+    *   (fixed) Lots and lots of small bugfixes. Hopefully, I managed to fix
+        all the bugs that were reported since the previous version was
+        released. :)
+
+    Some of you might notice that in the Windows version of SIDedit there is
+    no "Browse" button next to the directory shortcut entries in the
+    "Configure settings" window. Unfortunately, this is due to a shortcoming
+    of the Perl/Tk interface and hopefully it'll be fixed when Tk-804 is
+    released.
+
+  v3.02 (11/22/2002)
+
+    *   (added) Changed the "copyright" field name to "released".
+
+    *   (fixed) The load range wasn't calculated correctly when the
+        relocation range was checked, causing incorrect error reports before
+        saving an RSID file.
+
+    *   (fixed) The lowest acceptable load and init address in RSID files
+        was lowered to $07E8. (Ask Simon if you are curious why. :)
+
+  v3.01 (11/03/2002)
+
+    *   (fixed) There was a bug in the code that was checking the relocation
+        range for RSID files, it sometimes reported a perfectly valid
+        relocation range (e.g. startPage = $9F, pageLength = $01) as
+        invalid. It won't do that any more.
+
+  v3.00 (10/29/2002)
+
+    *   (added) The tool's name was changed from PSIDedit to SIDedit. Note
+        that this means that you'll have to rename your PSIDedit.ini file to
+        SIDedit.ini and change the first line in it to "[SIDedit]" if you
+        want to retain your old settings!
+
+    *   (added) The tool requires the new Audio::SID v3.00 module to work
+        (if you're using the Win32 executable, you don't have to worry about
+        this).
+
+    *   (added) There's a new field labeled "Environment" in the SID header
+        section. You can select either "PlaySID" (PSID) or "Real C64" (RSID)
+        here. This basically sets the magic ID in the SID file to PSID or
+        RSID. Selecting RSID enforces additional restrictions over PSID v2NG
+        - see the included documentation for details.
+
+    *   (added) Additional full support for RSID, like relocation info
+        fields.
+
+    *   (added) The "HVSC Filename" button is now called "Create HVSC
+        Filename". Hopefully, this'll make its function a bit more
+        understandable.
+
+    *   (added) With the new name comes a slightly different icon - thanks
+        to Peter Sandén for taking the time to create it for me! :)
+
+    *   (fixed) If you change the loadAddress field, its new value is now
+        properly reflected in the data display window, too.
+
+    *   (fixed) Changing the CLOCK field didn't automatically regenerate the
+        MD5 fingerprint. Fixed it.
+
+    *   (fixed) Pressing CTRL+<Key> or ALT+<Key> (and nothing else) in the
+        text entry fields of the SID header no longer pops up the "Save
+        file?" dialog window if you move to another file right away.
+
+    *   (fixed) The "funny" texts on buttons of error popup windows are
+        gone. Apparently, many of you didn't think they were funny. So, now
+        the only button you can press there simply says "OK".
+
+    *   (fixed) The "Run tool" feature didn't work properly if the full
+        pathname of the file you tried to operate on contained a space.
+        Fixed it.
+
+    *   (fixed) Many other minor internal enhancements made to the tool.
+
+  v2.12 (PSIDedit) (09/18/2002)
+
+    *   (added) The "HVSC Filename" button will automatically append "_PSID"
+        to the filename if the PlaySID flag is set. (Although the filename
+        might still require some manual editing to make it "look better".)
+
+    *   (added) In almost all dialog boxes you can now press hotkeys, too.
+        If the hotkeys don't seem to work, try CTRL+hotkey or ALT+hotkey.
+        For example, in a Yes/No dialog box you can simply press the "Y" or
+        "N" keys to answer the question. In the "Data display" window you
+        can press CTRL+O to close the window.
+
+    *   (fixed) The "HVSC Filename" button now handles "+" signs in titles
+        correctly.
+
+    *   (fixed) Zero-length filenames are no longer allowed when saving.
+
+    *   (fixed) The MD5 fingerprints are now calculated with the new
+        algorithm (so for files in HVSC they will match those found in the
+        latest songlength database).
+
+  v2.11 (PSIDedit) (08/21/2002)
+
+    *   (fixed) Minor bugfixes in HVSC compliant filename generation.
+
+    *   (fixed) Removed references to "Amiga" in speed bit edit popup.
+
+  v2.10 (PSIDedit) (08/05/2002)
+
+    *   (added) Ability to load INFO files (these are text files that were
+        part of the now obsolete .dat + .sid two-file format). PSIDedit also
+        handles newer INFO files that contain PSID v2NG fields in them.
+
+    *   (added) A new button called "Run tool" allows the user to run any
+        external tool in a command shell right from PSIDedit. The output of
+        such commands is captured in a window - the contents of this window
+        can then be saved to a file or copied to the clipboard. This new
+        button was added mainly to allow rippers to run sid2crc right from
+        PSIDedit which allows them to check SID files. PSIDedit will
+        remember the last 10 command lines entered here and this command
+        list is also saved to the PSIDedit.ini file with other settings.
+
+    *   (added) On the "Display C64 data" window a new button was added
+        called "Trim/pad data" that allows the user to alter the size of the
+        C64 data in a PSID file. This is great to trim a ripped file to get
+        rid of superfluous bytes from it.
+
+    *   (added) Pressing an alphanumeric key when the dir/file browser is in
+        focus will cycle thru the dirs/files that begin with that letter. If
+        you start typing rapidly, the first file whose name starts with the
+        typed letters will be highlighted, similar to Windows Explorer.
+
+    *   (added) When moving up the dir hierarchy via the dir browser the
+        previous directory's name will be automatically highlighted (instead
+        of the name of the very first dir entry).
+
+    *   (fixed) Minor bugfixes in the "HVSC filename" feature that generates
+        an HVSC-compliant filename based on the "name" field.
+
+    *   (fixed) Copying data to the clipboard INFO style had some bugs in
+        it. Got rid of them. Similarly, pasting INFO style data from the
+        clipboard was also buggy. Fixed that, too.
+
+    *   (fixed) Loading data files (.dat, .prg, etc.) will no longer reset
+        the PSID header data to defaults automatically. You now have a
+        choice whether to keep the PSID header data or not. This will save
+        you a copy-paste step when, for example, constructing several SID
+        files in a row from data files that were ripped from the same
+        author.
+
+    *   (fixed) If you tried to play a SID file under Windows whose full
+        pathname contained a space, SIDPlay/Win used to give an error. Fixed
+        it.
+
+    *   (fixed) Other minor (mostly internal) enhancements.
+
+  v2.02 (PSIDedit) (07/22/2002)
+
+    *   (fixed) Apostrophe handling for titles containg 'n' and underscores
+        when creating HVSC compliant filename.
+
+  v2.01 (PSIDedit) (04/22/2002)
+
+    *   (added) New tooltips were added to the 'author' and 'copyright'
+        fields to show the suggested format for those fields (actually, that
+        is pretty much how HVSC requires them to look like - consult the
+        /DOCUMENTS/hv_sids.txt file of your HVSC collection for details).
+
+    *   (fixed) Fixed a minor bug in the 'songs' and 'startSong' entry
+        fields.
+
+    *   (fixed) The tabbing order amongst the PSID header fields is now a
+        bit more convenient (TAB won't cycle through the little checkboxes
+        any more).
+
+  v2.00 (PSIDedit) (04/02/2002)
+
+    *   (added) Complete support of the PSID v2NG file format specification.
+
+    *   (added) Individual bits in the 'speed' and 'flags' fields can be
+        edited via user-friendly pop-up windows.
+
+    *   (added) Ability to launch a SID emulator to play a tune right from
+        PSIDedit.
+
+    *   (added) Ability to launch a hex editor from within PSIDedit to edit
+        the binary contents of a .sid file.
+
+    *   (added) A brand new C64 data display window allows the user to
+        examine the contents of a SID tune either as a hex dump (where C64
+        ASCII characters are also translated to standard ASCII characters)
+        or as disassembled machine code (with or without illegal
+        instructions),
+
+    *   (added) More control over which PSID header fields will be copied to
+        and pasted from the clipboard (this is very handy when you are
+        turning many rips from the same author into .sid files, it saves you
+        from a lot of typing).
+
+    *   (added) Configuration settings are stored in an .ini file.
+
+    *   (added) PSIDedit icon.
+
+    *   (added) On-the-fly verification of many editable fields.
+
+    *   (added) Win32 specific support for clipboard operations.
+
+    *   (added) Drive selection support under Win32 systems.
+
+    *   (added) More robust error checking with error message popup window.
+
+    *   (added) Directory operations (delete, create, etc.).
+
+    *   (added) More extensive tooltips.
+
+    *   (added) More extensive tutorial on usage.
+
+  v1.60c (PSIDedit) (01/23/2002)
+
+    *   (added) MD5 fingerprint is updated on the fly as the PSID header is
+        edited.
+
+    *   (added) PSIDedit is now also available as a standalone Windows
+        executable! No installation needed - just run it and enjoy. :) But
+        since it was created with the evaluation version of Perl2EXE, you'll
+        see a nag-window come up after you close PSIDedit.
+
+    *   (fixed) HVSC root filename is only 26 characters long, not 27.
+
+  v1.60b (PSIDedit) (01/20/2002)
+
+    *   (added) You can now not only copy PSID header information to the
+        clipboard, but you can also paste properly formatted header info
+        from the clipboard into the PSID file you are editing by pressing
+        the new "Paste" button. To find out what "properly formatted" means,
+        simply load a PSID file, press "Copy", then paste what was just
+        copied to the clipboard into your favorite text editor. As you'll
+        see, it's basically the PSID header in plain text. "Paste" doesn't
+        require all those PSID fields to be present in the clipboard, thus,
+        you can paste only a subset of those fields into PSID files.
+
+    *   (added) Added a button titled "HVSC Filename" that makes the
+        filename HVSC compliant (essentially, POSIX compliant). What it does
+        to create the filename is basically the same thing that Shark's
+        SID2LFN tool does. The filename it creates is not gospel (I lack the
+        time to code up an AI engine in Perl ;), but a very good guess at
+        what the filename should be if you want your rip to be in HVSC.
+
+    *   (added) Added POD to the script. The description also contains a
+        real-life example of how I imagine this PSIDedit tool to be used by
+        rippers.
+
+  v1.60 (PSIDedit) (01/14/2002)
+
+    *   (added) Using Audio::PSID instead of PSID.pm.
+
+  v1.58 (PSIDedit) (12/16/2001)
+
+    *   (fixed) Update file lists if file is saved with different name.
+
+    *   (added) Ability to edit dataOffset.
+
+  v1.56 (PSIDedit) (12/08/2001)
+
+    First public release. Lots of changes and additions.
+
+  v1.00 (PSIDedit) (09/29/1999)
+
+    First release.
+
