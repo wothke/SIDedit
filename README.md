@@ -68,6 +68,8 @@ must be patched by commenting out the line #58:
 Once this has been done SIDedit.pl should run fine when you start it directly in
 the Perl interpreter.
 
+PS: if you intend to run the script directly you should copy the SIDedit.txt and
+SIDedit.ini configuration files into the folder with the script.
 
 ### build windows exe
 
@@ -80,6 +82,10 @@ To create an .exe with all the Perl stuff in it, install the "PAR Packager":
 you can then type the below in a windows command prompt:
 
 `pp.bat --gui --compress=9 -u -o SIDedit.exe SIDedit.pl`
+
+PS: make sure to copy the SIDedit.txt and SIDedit.ini configuration files into the 
+folder with the exe file.
+
 
 
 ## license

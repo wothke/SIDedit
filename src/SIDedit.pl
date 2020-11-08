@@ -50,8 +50,6 @@ BEGIN {
 		use utf8;	# XXX
 		use Encode 'encode';
 		binmode STDOUT, ":encoding(cp850)";
-		
-	    local ($^W) = 0; # XXX get rid of missing tkIcons warning
     }
 
     use Tk;
