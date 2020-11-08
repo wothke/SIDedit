@@ -56,14 +56,15 @@ from the above example. I then also used an old Tk module (804.029_502) - again
 to minimize the amount of changes to the version that LaLa might have used in
 2004.
 
-PS: to check which module version (e.g. of Tk) is used type: `cpan -D Tk` in a 
+PS: to check which module version (e.g. of Tk) is used, type: `cpan -D Tk` in a 
 windows command prompt.
 
 ### patch 3rd party module
 
 One of the extra modules that you'll have installed will be Tk::WaitBox. It 
-must be patched by commenting out the line #58:
-`#    $cw->transient($cw->toplevel)` (see C:\strawberry\perl\site\lib\Tk\WaitBox.pm) 
+must be patched by commenting out the line #58 in C:\strawberry\perl\site\lib\Tk\WaitBox.pm:
+
+`#    $cw->transient($cw->toplevel)`
 
 Once this has been done SIDedit.pl should run fine when you start it directly in
 the Perl interpreter.
