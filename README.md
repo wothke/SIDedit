@@ -29,7 +29,7 @@ version you like.
 When you try to run 'perl.exe SIDedit.pl' now, the error messages in the 
 command prompt will tell you what modules still need to be installed.
 
-### use Perl's "cpan" command to install missing modules
+### use Perl's "cpan" tool to install missing modules
 
 If you need an overview what different versions of a module are available
 then https://metacpan.org/ is a good place to go to. Specific versions 
@@ -37,8 +37,8 @@ here can either be downloaded directly or you can use the "MetaCPAN Explorer"
 link to find out under what URL the respective version's archive file can be 
 downloaded, e.g. https://cpan.metacpan.org/authors/id/L/LA/LALA/Audio-SID-3.03.tgz
 
-Using Perl's "cpan" commandline tool, modules can either be downloaded in their
-most recent version, e.g.:
+Using Perl's "cpan" commandline tool (type 'cpan' in a Windows commend prompt), 
+modules can either be downloaded in their most recent version, e.g.:
 
 `cpan> install Audio::SID`
 
