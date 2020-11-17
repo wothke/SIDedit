@@ -15,22 +15,17 @@ eval 'exec perl -w -S $0 ${1+"$@"}'
 # This is basically the 4.02 version available on LaLa's webpage, EXCEPT
 # for the below changes (which are marked with "XXX" comments).
 #
-# Added fixes to make it run with "today's" perl/module versions (I've been using:
-# Perl v5.8.9 Strawberry on Windows10, SREZIC/Tk-804.029_502.tar.gz, 
-# BPOWERS/Tk-WaitBox-1.3.tar.gz): 
+# I added fixes to make it run with "today's" perl/module versions (I've been using:
+# Perl v5.8.9 Strawberry on Windows10, SREZIC/Tk-804.029_502.tar.gz,
+# BPOWERS/Tk-WaitBox-1.3.tar.gz):
 #
-# 1) the original logic of getting default background colors for enabled/disabled  
+# 1) the original logic of getting default background colors for enabled/disabled
 #    fields by querying the window no longer works - I just hardcoded them now.
 #
 # 2) The Tk::WaitBox module must be patched by commenting out the line #58:
-#    $cw->transient($cw->toplevel). (see C:\strawberry\perl\site\lib\Tk\WaitBox.pm) 
+#    $cw->transient($cw->toplevel). (see C:\strawberry\perl\site\lib\Tk\WaitBox.pm)
 #
-# Functional changes are:
-#
-# 1) Added "List all files" option so that binaries can be loaded without 
-#    having to rename them to "*.prg" first.
-#
-# 2) Added browsing support for Windows folder names containing non-ASCII characters.
+# Functional changes are described in the release notes.
 #
 BEGIN {
     if ($^O =~ /win32/i) {
@@ -46,7 +41,7 @@ BEGIN {
         # Standard Tk copy-to-clipboard operation crashes under Win,
         # so use this instead.
         require Win32::Clipboard; import Win32::Clipboard;
-		
+
 		use utf8;	# XXX
 		use Encode 'encode';
 		binmode STDOUT, ":encoding(cp850)";
@@ -124,8 +119,6 @@ my (@raised) = (-relief => 'raised');
 my (@sunken) = (-relief => 'sunken');
 my (@flat)   = (-relief => 'flat');
 my (@noBorder) = (-padx => 0, -pady => 0);
-
-%background = ();
 
 # Windows specific stuff.
 
@@ -1454,8 +1447,8 @@ sub AddSIDfields {
                     -textvariable => \$SIDfield{$field},
                     -width => 32)
                 ->grid(-column => 1, -columnspan => 2, -row => $row, -sticky => 'w');
-				
-            $ENABLED_ENTRY_COLOR = $entry->cget('background') unless (defined($ENABLED_ENTRY_COLOR));			
+
+            $ENABLED_ENTRY_COLOR = $entry->cget('background') unless (defined($ENABLED_ENTRY_COLOR));
             $ENABLED_ENTRY_COLOR = 'black' unless (defined($ENABLED_ENTRY_COLOR));	#XXX
         }
 
@@ -1679,7 +1672,6 @@ sub UpdateV2Fields {
         $dataOffsetEntry->configure(-state => 'normal', -background => $ENABLED_ENTRY_COLOR);
         $flagsEntry->configure(-state => 'normal', -background => $ENABLED_ENTRY_COLOR);
         $flagsEditButton->configure(-state => 'normal');
-		
         $startPageEntry->configure(-state => 'normal', -background => $ENABLED_ENTRY_COLOR);
         $pageLengthEntry->configure(-state => 'normal', -background => $ENABLED_ENTRY_COLOR);
         $reservedEntry->configure(-state => 'normal', -background => $ENABLED_ENTRY_COLOR);
@@ -4000,7 +3992,8 @@ sub FileSelect {
         }
     }
 
-#    if (grep(/^$extension$/i, @datfiles)) {	XXX
+#    if (grep(/^$extension$/i, @datfiles)) { XXX
+    if (!grep(/^$extension$/i, @inffiles) && !grep(/^$extension$/i, @sidfiles)) {
         # Load file as SID data.
 
         # Ask user if this is what was the intent.
@@ -4029,7 +4022,7 @@ sub FileSelect {
         # Rename extension.
         $tempfilename = $rootname . ".sid";
         $mySID->setFileName($tempfilename);
-#    }
+    }
 
     $FH->close();
 
@@ -4438,14 +4431,14 @@ sub ScanDir {
 		# it seems this crap fails miserably when relative
 		# path contains non ascii chars.. what a joke
 		my $sep = File::Spec->catfile('', '');
-		my $fullpath= $drive.$sep.$directory;		
+		my $fullpath= $drive.$sep.$directory;
 		$fullpath =  encode cp1252 => $directory; # https://de.wikipedia.org/wiki/Windows-1252
-		
-		opendir(DIR, $fullpath) or print STDOUT "ERROR: FAILED TO OPEN DIR\n";	
-   } else {
-		opendir(DIR, $directory) or print STDOUT "ERROR: FAILED TO OPEN DIR\n";	
-   }   
-#    opendir(DIR, $directory);	
+
+		opendir(DIR, $fullpath) or print STDOUT "ERROR: FAILED TO OPEN DIR\n";
+	} else {
+		opendir(DIR, $directory) or print STDOUT "ERROR: FAILED TO OPEN DIR\n";
+	}
+#    opendir(DIR, $directory);
     @allFiles = sort {uc($a) cmp uc($b)} readdir(DIR);
     closedir(DIR);
 
@@ -4459,7 +4452,7 @@ sub ScanDir {
         }
         if (-f $file) {
             # This is our filter mechanism.
-						
+
             if ($ListAllFiles) { 	# XXX
 				$filelistbox->insert('end', $file);
 				if (!$modified and ($filename eq $file)) {
@@ -4469,8 +4462,10 @@ sub ScanDir {
 				next;
 			}
 
-            if ($file =~ /\.(\S+)$/) {
+#            if ($file =~ /\.(\S+)$/) {		XXX fails miserably for dots in names and brackets in particular!
+            if ($file =~ /\.([^\.\s\)\(]+)$/) {
                 $extension = $1;
+
                 if ($ListDataFiles) {
                     if (grep(/^$extension$/i, @datfiles)) {
                         $filelistbox->insert('end', $file);
@@ -4639,14 +4634,14 @@ sub ChangeToDir($) {
 	# XXX orig impl fails for whitespace in folder names
 	if (!(($dir eq "..") or ($dir =~ /^([a-z]|[A-Z]):/))) {
 		my $sep = File::Spec->catfile('', '');
-		$dir = Cwd::cwd().$sep.$dir;
-		
+		$dir = cwd.$sep.$dir;
+
 		# it also fails for non ascii chars in folder names (at least on Windows)
 		$dir =  encode cp1252 => $dir; # https://de.wikipedia.org/wiki/Windows-1252
 	}
-	
+
     unless (chdir($dir)) {
-        # Whoops, couldn't change to the specified directory.
+       # Whoops, couldn't change to the specified directory.
         if ($isWindows) {
             if ($drive eq $dir) {
                 ErrorBox("Can't read from drive $drive!");
@@ -5988,6 +5983,17 @@ sub Quit {
     }
 }
 
+sub CustomPaste($) {		# XXX added
+	# Tk idiot impl replaces selection when typing but not when pasting..
+	# what a useless POS! The same kind of paste behavior should also
+	# be used for all other fields but I don't care enough to waste more
+	# of my time with this Perl shit
+
+	my($entry)= @_;
+	$entry->delete('sel.first', 'sel.last');
+	Tk->break();
+}
+
 sub SetupBindings {
 
     # File listbox
@@ -6047,6 +6053,7 @@ sub SetupBindings {
     # User entered a specific directory name.
 #    $direntry->bind("<FocusOut>", sub {ChangeToDir($directory);} );
     $direntry->bind("<Return>", sub {ChangeToDir($directory);} );
+    $direntry->bind("<<Paste>>", sub {CustomPaste($direntry);} );	# XXX added
 
     # For some stupid reason clicking in a listbox doesn't
     # make it focused, so we fix it here.

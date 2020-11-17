@@ -515,6 +515,13 @@ VERSION HISTORY
     *   Added browsing support for Windows folder names containing non-ASCII 
         characters.
 
+    *   Added "selection replace" when pasting into directory field.
+
+    *   Fixed flawed regexp so it no longer crashes for windows filenames
+        containing dots or brackets.
+
+    *   Disassembly view now uses regular 3-char mnemonics for illegal opcodes.
+
     *   Patched so it works with Perl and module versions still available today.
 
   v4.02 (03/13/2004)
